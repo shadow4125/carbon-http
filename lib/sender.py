@@ -26,7 +26,7 @@ class CarbonSender(threading.Thread):
         self.timeout = timeout
         self.is_running = True
         self.interval = 3
-        self.queue_size = 100
+        self.send_size = 100    # should lower than CONF.queue.maxsize
         self.send_time = time.time()
 
         self.connect()
@@ -53,7 +53,7 @@ class CarbonSender(threading.Thread):
 
             if self.sock is not None:
                 LOG.debug("Sending data...")
-                self.socket.sendall(data)
+                self.sock.sendall(data)
             else:
                 LOG.error("Socket unavailable.")
         except Exception as e:
@@ -67,7 +67,7 @@ class CarbonSender(threading.Thread):
             self.sock = None
 
     def oversize(self):
-        return (self.queue.qsize() >= self.queue_size)
+        return (self.queue.qsize() >= self.send_size)
 
     def overtime(self):
         return ((time.time() - self.send_time) >= self.interval)
@@ -77,8 +77,11 @@ class CarbonSender(threading.Thread):
             # oversize or overtime
             if self.oversize() or (self.overtime() and not self.queue.empty()):
                 data = []
-                while len(data) < self.queue_size and not self.queue.empty():
-                    data.append(self.queue.get())
+                while len(data) < self.send_size and not self.queue.empty():
+                    try:
+                        data.append(self.queue.get(block=True, timeout=1))
+                    except Exception as e:
+                        LOG.error('Get metric from queue error :%s' % str(e))
 
                 if len(data) > 0:
                     try:

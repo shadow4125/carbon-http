@@ -7,7 +7,7 @@
 import os
 
 from lib.conf import CONF
-from utils import rest
+from lib.utils import rest
 
 
 class Index(rest.QResource):

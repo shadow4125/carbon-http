@@ -4,7 +4,6 @@
 # 
 # Author: shadow.zhang<shadowyue4125@gmail.com>
 
-
 from flask.ext.restful import reqparse
 import flask.ext.restful as flask_restful
 
