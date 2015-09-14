@@ -8,7 +8,7 @@ import threading
 import Queue
 import signal
 import time
-import sys
+import os
 
 from qg.core.app.exts.log import QLogExtension
 from qg.core import log as logging
@@ -34,15 +34,17 @@ class CarbonHttpApplication(QFlaskApplication, rest.QRestfulMixin):
                 continue
 
             if type(t) is CarbonSender:
-                cnt = 3
-                while cnt > 0:
+                while True:
                     if not t.isAlive():
                         break
-                    cnt = cnt - 1
                     time.sleep(1)
 
-        # 退出主进程
-        sys.exit(0)
+        pid = os.getpid()
+        try:
+            os.kill(pid, signal.SIGTERM)
+        except IOError as e:
+            LOG.error('Kill the process[%d] failed. %s' % (pid, str(e)))
+            raise SystemExit('Kill the process[%d] failed.' % pid)
 
     def configure(self):
         super(CarbonHttpApplication, self).configure()

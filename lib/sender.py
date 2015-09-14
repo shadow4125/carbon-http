@@ -29,7 +29,16 @@ class CarbonSender(threading.Thread):
         self.send_size = 100    # should lower than CONF.queue.maxsize
         self.send_time = time.time()
 
-        self.connect()
+        self.retry(self.connect, 3)
+
+    def retry(self, func, times):
+        cnt = 0
+        while cnt < times:
+            try:
+                return func()
+            except Exception as e:
+                LOG.error("Call func:%s failed. %s" % (func, str(e)))
+                cnt += 1
 
     def connect(self):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
